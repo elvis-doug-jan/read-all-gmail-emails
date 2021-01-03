@@ -1,0 +1,9 @@
+{
+  "name": "gmail",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "googleapis": "^66.0.0"
+  }
+}
