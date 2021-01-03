@@ -16,7 +16,6 @@ const TOKEN_PATH = "token.json";
 fs.readFile("credentials.json", (err, content) => {
   if (err) return console.log("Error loading client secret file:", err);
   // Authorize a client with credentials, then call the Gmail API.
-  // authorize(JSON.parse(content), listLabels);
   authorize(JSON.parse(content), listAllMessages);
 });
 
@@ -75,48 +74,14 @@ function getNewToken(oAuth2Client, callback) {
 }
 
 /**
- * Lists the labels in the user's account.
+ * Modify label on messages.
  *
  * @param {google.auth.OAuth2} auth An authorized OAuth2 client.
+ * @param {string} messageId ID for inidividual message
  */
-function listLabels(auth) {
-  const gmail = google.gmail({ version: "v1", auth });
-  gmail.users.labels.list(
-    {
-      userId: "me",
-    },
-    (err, res) => {
-      if (err) return console.log("The API returned an error: " + err);
-      const labels = res.data.labels;
-      if (labels.length) {
-        console.log("Labels:");
-        labels.forEach((label) => {
-          console.log(`- ${label.name}`);
-        });
-      } else {
-        console.log("No labels found.");
-      }
-    }
-  );
-}
-
 async function readMessage(auth, messageId) {
   const gmail = google.gmail({ version: "v1", auth });
   console.log({ messageId });
-
-  // await gmail.users.messages
-  //   .get({ userId: "me", id: messageId })
-  //   .then(async ({ data }) => {
-  //     console.log("RESPOSTA", data.snippet);
-
-  //     // const messageData = Buffer.from(
-  //     //   messageContent.payload.body.data,
-  //     //   "base64"
-  //     // ).toString();
-
-  //     // console.log("TEXTO DO EMAIL", messageData);
-  //   })
-  //   .catch((error) => console.error("DEU ERRO", error));
 
   await gmail.users.messages
     .modify({
@@ -125,14 +90,19 @@ async function readMessage(auth, messageId) {
       id: messageId,
     })
     .then(({ data }) => {
-      console.log("RESPOSTA DO UPDATE NO GMAIL", data);
+      console.log("GMAIL RESPONSE ON MODIFY", data);
     })
     .catch((error) => {
-      console.error("ERRO AO CONSULTAR GMAIL", error);
-      throw error;
+      console.error("ERROR ON MODIFY MESSAGEM ON GMAIL", error);
+      throw new Error(error);
     });
 }
 
+/**
+ * List all messages on Gmail with "UNREAD" label.
+ *
+ * @param {google.auth.OAuth2} auth An authorized OAuth2 client.
+ */
 async function listAllMessages(auth) {
   const gmail = google.gmail({ version: "v1", auth });
   let nextPageToken = null;
@@ -149,9 +119,9 @@ async function listAllMessages(auth) {
       .then(async ({ data }) => {
         const messagesList = data.messages;
         const totalMessages = messagesList.length;
-        // console.log("TOTAL DE MENSAGENS", totalMessages);
+
         messagesCount += totalMessages;
-        console.log("TOTAL DE MENSAGENS", messagesCount);
+        console.log("TOTAL MESSAGES ON THIS PAGE", messagesCount);
         for (const i in messagesList) {
           readMessage(auth, messagesList[i].id);
         }
@@ -163,7 +133,7 @@ async function listAllMessages(auth) {
       })
       .catch((error) => {
         console.error("DEU ERRO", error);
-        throw error;
+        throw new Error(error);
       });
   };
 
