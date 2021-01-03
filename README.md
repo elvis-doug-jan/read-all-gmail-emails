@@ -1,0 +1,1 @@
+### API simples apenas para ler todas aquelas mensagens acumuladas no Gmail.
