@@ -132,7 +132,7 @@ async function listAllMessages(auth) {
         }
       })
       .catch((error) => {
-        console.error("DEU ERRO", error);
+        console.error("ERROR ON GET MESSAGES", error);
         throw new Error(error);
       });
   };
