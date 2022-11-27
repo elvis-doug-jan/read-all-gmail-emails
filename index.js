@@ -1,26 +1,23 @@
-const fs = require("fs");
-const readline = require("readline");
-const { google } = require("googleapis");
+const fs = require('fs')
+const readline = require('readline')
+const { google } = require('googleapis')
 
 // If modifying these scopes, delete token.json.
-const SCOPES = [
-  "https://www.googleapis.com/auth/gmail.readonly",
-  "https://www.googleapis.com/auth/gmail.modify",
-];
+const SCOPES = ['https://www.googleapis.com/auth/gmail.readonly', 'https://www.googleapis.com/auth/gmail.modify']
 // The file token.json stores the user's access and refresh tokens, and is
 // created automatically when the authorization flow completes for the first
 // time.
-const TOKEN_PATH = "token.json";
+const TOKEN_PATH = 'token.json'
 
 // Load client secrets from a local file.
-fs.readFile("credentials.json", (err, content) => {
+fs.readFile('credentials.json', (err, content) => {
   if (err)
     return console.log(
       "'credentials.json' file not found. Check here to proceed: https://developers.google.com/gmail/api/quickstart/nodejs"
-    );
+    )
   // Authorize a client with credentials, then call the Gmail API.
-  authorize(JSON.parse(content), listAllMessages);
-});
+  authorize(JSON.parse(content), listAllMessages)
+})
 
 /**
  * Create an OAuth2 client with the given credentials, and then execute the
@@ -29,19 +26,15 @@ fs.readFile("credentials.json", (err, content) => {
  * @param {function} callback The callback to call with the authorized client.
  */
 function authorize(credentials, callback) {
-  const { client_secret, client_id, redirect_uris } = credentials.installed;
-  const oAuth2Client = new google.auth.OAuth2(
-    client_id,
-    client_secret,
-    redirect_uris[0]
-  );
+  const { client_secret, client_id, redirect_uris } = credentials.installed
+  const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uris[0])
 
   // Check if we have previously stored a token.
   fs.readFile(TOKEN_PATH, (err, token) => {
-    if (err) return getNewToken(oAuth2Client, callback);
-    oAuth2Client.setCredentials(JSON.parse(token));
-    callback(oAuth2Client);
-  });
+    if (err) return getNewToken(oAuth2Client, callback)
+    oAuth2Client.setCredentials(JSON.parse(token))
+    callback(oAuth2Client)
+  })
 }
 
 /**
@@ -52,28 +45,28 @@ function authorize(credentials, callback) {
  */
 function getNewToken(oAuth2Client, callback) {
   const authUrl = oAuth2Client.generateAuthUrl({
-    access_type: "offline",
-    scope: SCOPES,
-  });
-  console.log("Authorize this app by visiting this url:", authUrl);
+    access_type: 'offline',
+    scope: SCOPES
+  })
+  console.log('Authorize this app by visiting this url:', authUrl)
   const rl = readline.createInterface({
     input: process.stdin,
-    output: process.stdout,
-  });
+    output: process.stdout
+  })
 
-  rl.question("Enter the code from that page here: ", (code) => {
-    rl.close();
+  rl.question('Enter the code from that page here: ', code => {
+    rl.close()
     oAuth2Client.getToken(code, (err, token) => {
-      if (err) return console.error("Error retrieving access token", err);
-      oAuth2Client.setCredentials(token);
+      if (err) return console.error('Error retrieving access token', err)
+      oAuth2Client.setCredentials(token)
       // Store the token to disk for later program executions
-      fs.writeFile(TOKEN_PATH, JSON.stringify(token), (err) => {
-        if (err) return console.error(err);
-        console.log("Token stored to", TOKEN_PATH);
-      });
-      callback(oAuth2Client);
-    });
-  });
+      fs.writeFile(TOKEN_PATH, JSON.stringify(token), err => {
+        if (err) return console.error(err)
+        console.log('Token stored to', TOKEN_PATH)
+      })
+      callback(oAuth2Client)
+    })
+  })
 }
 
 /**
@@ -83,22 +76,22 @@ function getNewToken(oAuth2Client, callback) {
  * @param {string} messageId ID for inidividual message
  */
 async function readMessage(auth, messageId) {
-  const gmail = google.gmail({ version: "v1", auth });
-  console.log({ messageId });
+  const gmail = google.gmail({ version: 'v1', auth })
+  console.log({ messageId })
 
   await gmail.users.messages
     .modify({
-      requestBody: { removeLabelIds: ["UNREAD"] },
-      userId: "me",
-      id: messageId,
+      requestBody: { removeLabelIds: ['UNREAD'] },
+      userId: 'me',
+      id: messageId
     })
     .then(({ data }) => {
-      console.log("GMAIL RESPONSE ON MODIFY", data);
+      console.log('GMAIL RESPONSE ON MODIFY', data)
     })
-    .catch((error) => {
-      console.error("ERROR ON MODIFY MESSAGEM ON GMAIL", error);
-      throw new Error(error);
-    });
+    .catch(error => {
+      console.error('ERROR ON MODIFY MESSAGEM ON GMAIL', error)
+      throw new Error(error)
+    })
 }
 
 /**
@@ -107,38 +100,40 @@ async function readMessage(auth, messageId) {
  * @param {google.auth.OAuth2} auth An authorized OAuth2 client.
  */
 async function listAllMessages(auth) {
-  const gmail = google.gmail({ version: "v1", auth });
-  let nextPageToken = null;
+  const gmail = google.gmail({ version: 'v1', auth })
+  let nextPageToken = null
 
-  let messagesCount = null;
+  let messagesCount = null
 
   const getMessagesRecursive = async () => {
     await gmail.users.messages
       .list({
-        userId: "me",
-        labelIds: ["INBOX", "UNREAD"],
-        pageToken: nextPageToken,
+        userId: 'me',
+        labelIds: ['INBOX', 'UNREAD'],
+        pageToken: nextPageToken
       })
       .then(async ({ data }) => {
-        const messagesList = data.messages;
-        const totalMessages = messagesList.length;
+        console.log('DATA', data)
+        const messagesList = data.messages
+        const totalMessages = messagesList.length
 
-        messagesCount += totalMessages;
-        console.log("TOTAL MESSAGES ON THIS PAGE", messagesCount);
+        messagesCount += totalMessages
+        console.log('TOTAL MESSAGES ON THIS PAGE', messagesCount)
+
         for (const i in messagesList) {
-          readMessage(auth, messagesList[i].id);
+          await readMessage(auth, messagesList[i].id)
         }
 
         if (totalMessages === 100) {
-          nextPageToken = data.nextPageToken;
-          getMessagesRecursive();
+          nextPageToken = data.nextPageToken
+          getMessagesRecursive()
         }
       })
-      .catch((error) => {
-        console.error("ERROR ON GET MESSAGES", error);
-        throw new Error(error);
-      });
-  };
+      .catch(error => {
+        console.error('ERROR ON GET MESSAGES', error)
+        throw new Error(error)
+      })
+  }
 
-  await getMessagesRecursive();
+  await getMessagesRecursive()
 }
