@@ -1,9 +1,13 @@
 {
-  "name": "gmail",
-  "version": "1.0.0",
+  "name": "read-gmail-inbox",
+  "version": "1.0.1",
   "main": "index.js",
   "license": "MIT",
   "dependencies": {
     "googleapis": "^66.0.0"
+  },
+  "scripts": {
+    "start-pm2": "pm2 start ecosystem.config.js",
+    "start": "node index.js"
   }
 }
