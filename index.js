@@ -114,6 +114,9 @@ async function listAllMessages(auth) {
       })
       .then(async ({ data }) => {
         console.log('DATA', data)
+
+        if (!data.messages.length) return console.log('NO MESSAGES TO READ!!!')
+
         const messagesList = data.messages
         const totalMessages = messagesList.length
 
